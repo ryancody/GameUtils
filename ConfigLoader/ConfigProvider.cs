@@ -8,21 +8,36 @@ public class ConfigProvider
     private Dictionary<string, object> cachedConfigs = new Dictionary<string, object>();
 
     /// <summary>
-    /// Load files from path using System.IO
+    /// Load files from many paths using System.IO
     /// </summary>
     /// <param name="path"></param>
     /// <exception cref="DirectoryNotFoundException"></exception>
-    public ConfigProvider(string? path = null)
+    public ConfigProvider(IEnumerable<string>? paths = null)
     {
-        if (string.IsNullOrEmpty(path)) path = ".";
+        if (!paths?.Any() ?? true) paths = new List<string> { "." };
 
-        if (!Directory.Exists(path)) throw new DirectoryNotFoundException();
+        configs = paths.SelectMany(path =>
+        {
+            if (!Directory.Exists(path)) throw new DirectoryNotFoundException(path);
 
-        var files = Directory.GetFiles(path, "*.json");
+            var files = Directory.GetFiles(path, "*.json");
 
-        configs = files.ToDictionary(f => Path.GetFileNameWithoutExtension(f), f => LoadContent(f));
+            return files.ToDictionary(f => Path.GetFileNameWithoutExtension(f), f => LoadContent(f));
+        }).ToDictionary(i => i.Key, i => i.Value);
     }
 
+    /// <summary>
+    /// Load files from a path using System.IO
+    /// </summary>
+    /// <param name="path"></param>
+    /// <exception cref="DirectoryNotFoundException"></exception>
+    public ConfigProvider(string path) : this(new List<string> { path }) { }
+
+    /// <summary>
+    /// Load files by passing a delegate to use custom file IO methods
+    /// </summary>
+    /// <param name="getConfigs"></param>
+    /// <exception cref="ArgumentNullException"></exception>
     public ConfigProvider(Func<IDictionary<string, string>> getConfigs)
     {
         if (getConfigs == null) throw new ArgumentNullException();

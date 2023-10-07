@@ -1,5 +1,5 @@
+using ConfigLoader.Tests.Models;
 using GameUtils.Config;
-using System.IO;
 
 namespace ConfigLoader.Tests
 {
@@ -29,6 +29,21 @@ namespace ConfigLoader.Tests
 
             // assert
             Assert.Equal("Foo", result.Name);
+        }
+
+        [Fact]
+        public void GetShouldReturnSerializedJsonsWithCustomPaths()
+        {
+            // setup
+            var configProvider = new ConfigProvider(new List<string> { "TestItems", "OtherTestItems" });
+
+            // run
+            var result1 = configProvider.Get<TestItems>();
+            var result2 = configProvider.Get<OtherTestItems>();
+
+            // assert
+            Assert.Equal("Foo", result1.Name);
+            Assert.Equal("Other", result2.Name);
         }
 
         [Fact]
